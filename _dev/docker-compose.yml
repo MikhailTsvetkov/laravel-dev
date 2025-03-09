@@ -1,0 +1,70 @@
+services:
+    app:
+        build:
+            context: ../
+            dockerfile: ./_dev/docker/php/8.4/Dockerfile
+        restart: unless-stopped
+        working_dir: /var/www/html
+        ports:
+            - "5173:5173"
+            - "8000:8000"
+        volumes:
+            - ../:/var/www/html
+            - ./docker/php/8.4/php.ini:/usr/local/etc/php/php.ini:ro
+        environment:
+            PHP_IDE_CONFIG: ${PHP_IDE_CONFIG}
+            XDEBUG_MODE: ${XDEBUG_MODE}
+            XDEBUG_CONFIG: client_host=${XDEBUG_CLIENT_HOST} client_port=${XDEBUG_CLIENT_PORT}
+            XDEBUG_START_WITH_REQUEST: ${XDEBUG_START_WITH_REQUEST}
+            XDEBUG_DISCOVER_CLIENT_HOST: ${XDEBUG_DISCOVER_CLIENT_HOST}
+        networks:
+            - net-laravel
+        depends_on:
+            - postgres
+
+    postgres:
+        image: postgres:17
+        restart: unless-stopped
+        environment:
+            POSTGRES_DB: postgres
+            POSTGRES_USER: postgres
+            POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+            - "${EXT_DB_PORT}:5432"
+        volumes:
+            - postgres-data:/var/lib/postgresql/data
+        networks:
+            - net-laravel
+
+    redis:
+        image: redis:7.4.2-alpine
+        command: [ 'redis-server', '/etc/redis.conf' ]
+        restart: unless-stopped
+        ports:
+            - "${EXT_REDIS_PORT}:6379"
+        volumes:
+            - ./docker/redis/redis-persistent.conf:/etc/redis.conf:ro
+            - redis-data:/data
+        networks:
+            - net-laravel
+
+    web:
+        image: nginx:alpine
+        restart: unless-stopped
+        ports:
+            - "80:80"
+        volumes:
+            - ../:/var/www/html
+            - ./docker/nginx:/etc/nginx/conf.d:ro
+        networks:
+            - net-laravel
+        depends_on:
+            - app
+
+volumes:
+    postgres-data:
+    redis-data:
+
+networks:
+    net-laravel:
+        driver: bridge
