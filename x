@@ -50,8 +50,6 @@ case $1 in
             docker compose exec -u www-data app bash -c "$CMD_XDEBUG_OFF && composer install"
             docker compose exec -u root app bash -c "mkdir -p /var/www/.npm && chown -R 1000:33 /var/www/.npm"
             docker compose exec -u www-data app bash -c "npm install"
-            docker compose exec -u www-data app bash -c "jq --arg v 'vite --host 0.0.0.0' '.scripts.dev = \$v' package.json > tmp.json && \
-               mv -f tmp.json package.json"
 
             docker compose exec -u www-data app bash -c "git add ."
         fi
@@ -64,8 +62,9 @@ case $1 in
         if [ "$2" == "dev" ]; then
             docker compose exec -u www-data app bash -c "
                 $CMD_XDEBUG_OFF && \
-                composer run dev
-            "
+                jq --arg v 'vite --host 0.0.0.0' '.scripts.dev = \$v' package.json > tmp.json && \
+                mv -f tmp.json package.json && \
+                composer run dev"
         fi
         ;;
 
