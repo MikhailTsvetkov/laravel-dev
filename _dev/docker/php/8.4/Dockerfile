@@ -20,7 +20,8 @@ RUN apt-get -y update && apt-get -y upgrade && apt-get -y install \
     libmcrypt-dev \
     libicu-dev \
     libonig-dev \
-    libxml2-dev
+    libxml2-dev \
+    jq
 
 # Install PHP extensions
 RUN docker-php-ext-install exif \

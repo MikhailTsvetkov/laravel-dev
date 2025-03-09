@@ -1,5 +1,5 @@
 ### Env setup
-`cp ./dev/.env.example .env`
+`cp ./_dev/.env.example .env`
 
 ### Docker compose build
 `docker compose build --no-cache`
