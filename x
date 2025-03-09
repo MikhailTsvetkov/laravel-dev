@@ -2,6 +2,7 @@
 
 CMD_XDEBUG_OFF="XDEBUG_MODE=off"
 CMD_VITE_FIX="jq --arg v 'vite --host 0.0.0.0' '.scripts.dev = \$v' package.json > tmp.json && mv -f tmp.json package.json"
+CMD_COMPOSER_PHP_VER="jq --arg v '^8.4' '.require.php = \$v' composer.json > tmp.json && mv -f tmp.json composer.json"
 
 case $1 in
     up)
@@ -24,7 +25,7 @@ case $1 in
         ;;
 
     down)
-        docker compose down $2
+        docker compose down "$2"
         ;;
 
     install)
@@ -51,6 +52,7 @@ case $1 in
                 mv ./laravel-dev/* . && \
                 rm -rf ./laravel-dev && \
                 $CMD_VITE_FIX && \
+                $CMD_COMPOSER_PHP_VER && \
                 composer install && \
                 npm install && \
                 git add ."

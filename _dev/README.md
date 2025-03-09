@@ -1,36 +1,75 @@
-### Env setup
-`cp ./_dev/.env.example .env`
+# Development
 
-### Docker compose build
-`docker compose build --no-cache`
 
 ### Set permissions for executable file
-`chmod +x ./d`
+```
+chmod +x ./x
+```
 
-### Run containers
-(`-b` for `composer update` and `npm install`)
 
-`./d up -b`
+## Laravel installation (for new projects)
 
-### Remove containers
+### 1. Copy the `.env` file if needed
+```
+cp _dev/.env.example.development .env
+```
+Edit the `.env` file as you need.
+
+### 2. Install Laravel 11
+Or another version that supports PHP 8.4
+```
+./x install laravel:11
+```
+
+
+## Project setup
+
+### 1. Copy the `.env` file if needed
+```
+cp .env.example.development .env
+```
+Edit the `.env` file as you need.
+
+### 2. Run the services
+(`-b` for `composer install` and `npm install`)
+```
+./x up -b
+```
+
+### 3. Run database migrations
+```
+./d artisan migrate
+```
+
+
+
+### Stop the services
 (`-v` for remove volumes)
-
-`./d down`
+```
+./d down
+```
 
 ### Vite run build
-`./d run build`
+```
+./d run build
+```
 
 ### Vite run dev
-`./d run dev`
+```
+./d run dev
+```
 
 ### Artisan
-`./d artisan <args>`
+```
+./d artisan <args>
+```
 
 ### Composer
-`./d composer <args>`
+```
+./d composer <args>
+```
 
 ### Npm
-`./d npm <args>`
-
-### Migrate DB
-`./d artisan migrate`
+```
+./d npm <args>
+```
