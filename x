@@ -39,19 +39,19 @@ case $1 in
             docker compose build
             docker compose up -d
 
-            docker compose exec -u www-data app bash -c "$CMD_XDEBUG_OFF && \
+            docker compose exec -u root app bash -c "mkdir -p /var/www/.npm && chown -R 1000:33 /var/www/.npm"
+
+            docker compose exec -u www-data app bash -c "
+                $CMD_XDEBUG_OFF && \
                 chmod +x ./_dev/env_updater && \
                 composer create-project --prefer-dist laravel/laravel:^$package_version_number.0 laravel-dev && \
                 ./_dev/env_updater && \
                 shopt -s dotglob && \
                 mv ./laravel-dev/* . && \
-                rm -rf ./laravel-dev"
-
-            docker compose exec -u www-data app bash -c "$CMD_XDEBUG_OFF && composer install"
-            docker compose exec -u root app bash -c "mkdir -p /var/www/.npm && chown -R 1000:33 /var/www/.npm"
-            docker compose exec -u www-data app bash -c "npm install"
-
-            docker compose exec -u www-data app bash -c "git add ."
+                rm -rf ./laravel-dev && \
+                composer install && \
+                npm install && \
+                git add ."
         fi
         ;;
 
