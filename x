@@ -1,6 +1,7 @@
 #!/bin/bash
 
 CMD_XDEBUG_OFF="XDEBUG_MODE=off"
+CMD_VITE_FIX="jq --arg v 'vite --host 0.0.0.0' '.scripts.dev = \$v' package.json > tmp.json && mv -f tmp.json package.json"
 
 case $1 in
     up)
@@ -49,6 +50,7 @@ case $1 in
                 shopt -s dotglob && \
                 mv ./laravel-dev/* . && \
                 rm -rf ./laravel-dev && \
+                $CMD_VITE_FIX && \
                 composer install && \
                 npm install && \
                 git add ."
@@ -62,8 +64,7 @@ case $1 in
         if [ "$2" == "dev" ]; then
             docker compose exec -u www-data app bash -c "
                 $CMD_XDEBUG_OFF && \
-                jq --arg v 'vite --host 0.0.0.0' '.scripts.dev = \$v' package.json > tmp.json && \
-                mv -f tmp.json package.json && \
+                $CMD_VITE_FIX && \
                 composer run dev"
         fi
         ;;
