@@ -38,7 +38,7 @@ Edit the `.env` file as you need.
 
 ### 3. Run database migrations
 ```
-./d artisan migrate
+./x artisan migrate
 ```
 
 
