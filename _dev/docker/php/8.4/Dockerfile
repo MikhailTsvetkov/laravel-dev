@@ -65,6 +65,9 @@ RUN \
     mkdir -p /var/www/.composer/cache && \
     chown -R www-data:www-data /var/www/.composer
 
+# Add sudo supporting for www-data user
+RUN echo 'www-data ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/www-data
+
 # Set working directory
 WORKDIR /var/www/html
 
