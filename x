@@ -7,7 +7,7 @@ if [ -f /.dockerenv ] || grep -q docker /proc/1/cgroup 2>/dev/null; then
 fi
 
 # Source the common command definitions
-source ./_dev/x_commands
+source ./_dev/docker/php/8.4/x_commands
 
 case $1 in
     up)
@@ -27,12 +27,11 @@ case $1 in
         cmd_run "$IN_CONTAINER" "$@"
         ;;
     artisan | composer | npm)
-        shift
         cmd_other_commands "$IN_CONTAINER" "$@"
         ;;
     *)
         echo "Unknown command: $1"
         echo "Available commands: up, down, install, run"
-        return 1
+        exit 1
         ;;
 esac

@@ -6,6 +6,10 @@ CMD_COMPOSER_PHP_VER="jq --arg v '^8.4' '.require.php = \$v' composer.json > tmp
 
 
 function cmd_up() {
+    if [ ! -f .env ]; then
+        cp '_dev/.env.example.development' '.env'
+    fi
+
     local in_container
     in_container=$1
     shift
@@ -47,6 +51,10 @@ function cmd_down() {
 }
 
 function cmd_install() {
+    if [ ! -f .env ]; then
+        cp '_dev/.env.example.development' '.env'
+    fi
+
     local in_container
     in_container=$1
     shift
@@ -75,8 +83,8 @@ function cmd_install() {
             $CMD_COMPOSER_PHP_VER && \
             composer require predis/predis && \
             composer install && \
-            sudo mkdir -p /var/www/.npm \
-            sudo chown -R 1000:33 /var/www/.npm
+            sudo mkdir -p /var/www/.npm && \
+            sudo chown -R www-data:www-data /var/www/.npm && \
             npm install && \
             git add ."
 
