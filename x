@@ -31,7 +31,7 @@ case $1 in
         ;;
     *)
         echo "Unknown command: $1"
-        echo "Available commands: up, down, install, run"
+        echo "Available commands: up, down, install, run, artisan, composer, npm"
         exit 1
         ;;
 esac
