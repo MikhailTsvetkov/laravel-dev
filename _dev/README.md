@@ -13,7 +13,7 @@ chmod +x ./x
 ```
 cp _dev/.env.example.development .env
 ```
-Edit the `.env` file as you need.
+*Edit the `.env` file as you need.*
 
 ### 2. Install Laravel 11
 Or another version that supports PHP 8.4
@@ -28,10 +28,10 @@ Or another version that supports PHP 8.4
 ```
 cp .env.example.development .env
 ```
-Edit the `.env` file as you need.
+*Edit the `.env` file as you need.*
 
 ### 2. Run the services
-(`-b` for `composer install` and `npm install`)
+*(`-b` for `composer install` and `npm install`)*
 ```
 ./x up -b
 ```
@@ -42,34 +42,35 @@ Edit the `.env` file as you need.
 ```
 
 
+## Commands
 
 ### Stop the services
-(`-v` for remove volumes)
+*`-v` for remove volumes*
 ```
-./d down
+./x down
 ```
 
 ### Vite run build
 ```
-./d run build
+./x run build
 ```
 
 ### Vite run dev
 ```
-./d run dev
+./x run dev
 ```
 
 ### Artisan
 ```
-./d artisan <args>
+./x artisan <args>
 ```
 
 ### Composer
 ```
-./d composer <args>
+./x composer <args>
 ```
 
 ### Npm
 ```
-./d npm <args>
+./x npm <args>
 ```

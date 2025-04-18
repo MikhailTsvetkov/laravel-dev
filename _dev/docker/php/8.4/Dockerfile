@@ -21,7 +21,8 @@ RUN apt-get -y update && apt-get -y upgrade && apt-get -y install \
     libicu-dev \
     libonig-dev \
     libxml2-dev \
-    jq
+    jq \
+    cron
 
 # Install PHP extensions
 RUN docker-php-ext-install exif \
@@ -48,9 +49,6 @@ RUN \
     echo "zend_extension = $(find /usr/local/lib/php/extensions/ -name xdebug.so)" > /usr/local/etc/php/conf.d/xdebug.ini && \
     echo "xdebug.start_with_request = \${XDEBUG_START_WITH_REQUEST}" >> /usr/local/etc/php/conf.d/xdebug.ini && \
     echo "xdebug.discover_client_host = \${XDEBUG_DISCOVER_CLIENT_HOST}" >> /usr/local/etc/php/conf.d/xdebug.ini
-
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Cleanup
 RUN \

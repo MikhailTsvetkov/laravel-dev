@@ -25,7 +25,7 @@ case $1 in
         ;;
 
     down)
-        docker compose down "$2"
+        docker compose down $2
         ;;
 
     install)
@@ -53,6 +53,7 @@ case $1 in
                 rm -rf ./laravel-dev && \
                 $CMD_VITE_FIX && \
                 $CMD_COMPOSER_PHP_VER && \
+                composer require predis/predis && \
                 composer install && \
                 npm install && \
                 git add ."
