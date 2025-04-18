@@ -1,7 +1,15 @@
 # Development
 
 
-### Set permissions for executable file
+## For Windows
+```
+docker compose up -d
+docker compose exec app bash
+```
+Note: On Windows, commands are executed inside a container. That's why `./x up` and `./x down` commands are not available on Windows.
+
+
+## Set permissions for executable file
 ```
 chmod +x ./x
 ```

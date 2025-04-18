@@ -7,7 +7,8 @@ CMD_COMPOSER_PHP_VER="jq --arg v '^8.4' '.require.php = \$v' composer.json > tmp
 
 function cmd_up() {
     if [ ! -f .env ]; then
-        cp '_dev/.env.example.development' '.env'
+       echo "'.env' file not found.'"
+       return 1
     fi
 
     local in_container
@@ -16,7 +17,7 @@ function cmd_up() {
 
     if [ "$in_container" = true ]; then
        echo "Cannot run 'up' command from inside the container"
-       exit 1
+       return 1
     fi
 
     local build=""
@@ -44,7 +45,7 @@ function cmd_down() {
 
     if [ "$in_container" = true ]; then
        echo "Cannot run 'up' command from inside the container"
-       exit 1
+       return 1
     fi
 
     docker compose down $1
