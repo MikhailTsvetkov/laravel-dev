@@ -2,28 +2,42 @@ services:
     app:
         build:
             context: ../
-            dockerfile: ./_dev/docker/php/8.4/Dockerfile
+            dockerfile: ./_dev/docker/php/Dockerfile
+            args:
+                XDEBUG_VERSION: ${XDEBUG_VERSION}
+                PHP_VERSION: ${PHP_VERSION:-8.4}
+                LOCAL_UID: ${LOCAL_UID:-1000}
+                LOCAL_GID: ${LOCAL_GID:-1000}
         restart: unless-stopped
         working_dir: /var/www/html
         ports:
-            - "5173:5173"
-            - "8000:8000"
+            - "${EXT_VITE_PORT1}:5173"
+            - "${EXT_VITE_PORT2}:8000"
         volumes:
             - ../:/var/www/html
-            - ./docker/php/8.4/php.ini:/usr/local/etc/php/php.ini:ro
+            - ./docker/php/php.ini:/usr/local/etc/php/php.ini:ro
         environment:
             PHP_IDE_CONFIG: ${PHP_IDE_CONFIG}
             XDEBUG_MODE: ${XDEBUG_MODE}
             XDEBUG_CONFIG: client_host=${XDEBUG_CLIENT_HOST} client_port=${XDEBUG_CLIENT_PORT}
             XDEBUG_START_WITH_REQUEST: ${XDEBUG_START_WITH_REQUEST}
             XDEBUG_DISCOVER_CLIENT_HOST: ${XDEBUG_DISCOVER_CLIENT_HOST}
+            XDG_CONFIG_HOME: /tmp/.config
         networks:
-            - net-laravel
+            - net
         depends_on:
-            - postgres
+            postgres:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
 
     postgres:
         image: postgres:17
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+            interval: 2s
+            timeout: 3s
+            retries: 30
         restart: unless-stopped
         environment:
             POSTGRES_DB: postgres
@@ -34,10 +48,15 @@ services:
         volumes:
             - postgres-data:/var/lib/postgresql/data
         networks:
-            - net-laravel
+            - net
 
     redis:
         image: redis:7.4.2-alpine
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 2s
+            timeout: 3s
+            retries: 30
         command: [ 'redis-server', '/etc/redis.conf' ]
         restart: unless-stopped
         ports:
@@ -46,18 +65,18 @@ services:
             - ./docker/redis/redis-persistent.conf:/etc/redis.conf:ro
             - redis-data:/data
         networks:
-            - net-laravel
+            - net
 
     web:
         image: nginx:alpine
         restart: unless-stopped
         ports:
-            - "80:80"
+            - "${EXT_WEB_PORT}:80"
         volumes:
             - ../:/var/www/html
             - ./docker/nginx:/etc/nginx/conf.d:ro
         networks:
-            - net-laravel
+            - net
         depends_on:
             - app
 
@@ -66,5 +85,5 @@ volumes:
     redis-data:
 
 networks:
-    net-laravel:
+    net:
         driver: bridge

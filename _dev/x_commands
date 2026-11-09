@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+
+usage() {
+    cat <<'EOF'
+Usage: ./x <command> [arguments]
+  up [-b] [compose options]  Start services; -b also installs dependencies
+  start [options] [services] Start existing containers
+  stop [options] [services]  Stop containers without removing them
+  ps [options] [services]    Compose PS
+  down [compose options]    Stop services (-v removes data volumes)
+  restart [services]        Restart services
+  deploy                    Deploy on this server using host PHP, Composer and npm
+  install laravel:<major>   Install Laravel into a new project
+  run dev|build [arguments]  Run Vite (queue and scheduler run in the container)
+  artisan|composer|npm ...   Run a command in the app container
+EOF
+}
+
+ensure_env() {
+    if [[ ! -f .env ]]; then
+        (umask 077; cp -- _dev/.env.example.development .env) || return
+        printf 'Created .env from _dev/.env.example.development\n'
+    fi
+}
+
+compose() {
+    docker compose --env-file "$ROOT_DIR/.env" \
+        -f "$ROOT_DIR/_dev/docker-compose.yml" "$@"
+}
+
+host_only() {
+    if [[ ${DEV_CONTAINER:-0} == 1 ]]; then
+        printf "Run '%s' on the host, outside the app container.\n" "$1" >&2
+        return 1
+    fi
+}
+
+in_app() {
+    if [[ ${DEV_CONTAINER:-0} == 1 ]]; then
+        env XDEBUG_MODE=off "$@"
+    else
+        local tty_options=()
+        if [[ ! -t 0 || ! -t 1 ]]; then tty_options=(-T); fi
+        compose exec "${tty_options[@]}" app env XDEBUG_MODE=off "$@"
+    fi
+}
+
+cmd_up() {
+    host_only up || return
+    local dependencies=false options=()
+    while (($#)); do
+        case $1 in
+            -b) dependencies=true ;;
+            *) options+=("$1") ;;
+        esac
+        shift
+    done
+    # Cached builds also ensure the image uses this checkout's PHP version and UID/GID.
+    compose up -d --build --remove-orphans "${options[@]}" || return
+    if [[ $dependencies == true ]]; then
+        if [[ -f composer.json ]]; then in_app composer install || return; fi
+        if [[ -f package.json ]]; then in_app npm install || return; fi
+    fi
+}
+
+cmd_install() {
+    if [[ $# != 1 || ! $1 =~ ^laravel:([1-9][0-9]*)$ ]]; then
+        printf 'Expected: ./x install laravel:<major>, for example laravel:11\n' >&2
+        return 1
+    fi
+    local major=${BASH_REMATCH[1]}
+    if [[ -e composer.json || -e artisan || -e laravel-dev ]]; then
+        printf 'Installation requires a new project without composer.json, artisan or laravel-dev.\n' >&2
+        return 1
+    fi
+    if [[ ${DEV_CONTAINER:-0} != 1 ]]; then
+        compose up -d --build --remove-orphans || return
+    fi
+    in_app bash _dev/install.sh "$major"
+}
+
+main() {
+    local command=${1:-help}
+    if (($#)); then shift; fi
+    case $command in
+        help|-h|--help) usage; return ;;
+        deploy)
+            host_only deploy || return
+            if (($#)); then
+                printf 'Expected: ./x deploy (no arguments)\n' >&2; return 1
+            fi
+            # Keep running this version even if git pull replaces the deploy script.
+            local deploy_script
+            deploy_script=$(cat -- "$ROOT_DIR/_dev/deploy.sh") || return
+            bash -c "$deploy_script" "$ROOT_DIR/_dev/deploy.sh"
+            return ;;
+        up|start|stop|down|restart|ps|install|run|artisan|composer|npm) ;;
+        *) printf 'Unknown command: %s\n' "$command" >&2; usage >&2; return 1 ;;
+    esac
+    # Validate before creating .env or contacting Docker.
+    if [[ $command == install && ( $# != 1 || ! ${1:-} =~ ^laravel:[1-9][0-9]*$ ) ]]; then
+        printf 'Expected: ./x install laravel:<major>\n' >&2; return 1
+    fi
+    if [[ $command == run && ${1:-} != dev && ${1:-} != build ]]; then
+        printf 'Expected: ./x run dev|build [arguments]\n' >&2; return 1
+    fi
+    if [[ ${DEV_CONTAINER:-0} != 1 ]]; then
+        command -v docker >/dev/null || { printf 'Docker with Compose v2 is required.\n' >&2; return 1; }
+        # Do not source .env as shell code. Compose reads it as dotenv.
+        export LOCAL_UID="$(id -u)" LOCAL_GID="$(id -g)"
+        if [[ $LOCAL_UID == 0 ]]; then
+            printf 'Run ./x as your regular user, without sudo.\n' >&2; return 1
+        fi
+    fi
+    ensure_env || return
+    case $command in
+        up) cmd_up "$@" ;;
+        start|stop|down|restart|ps) host_only "$command" && compose "$command" "$@" ;;
+        install) cmd_install "$@" ;;
+        artisan) in_app php artisan "$@" ;;
+        composer|npm) in_app "$command" "$@" ;;
+        run)
+            local task=$1; shift
+            if [[ $task == dev ]]; then
+                # laravel-vite-plugin's Docker defaults bind 0.0.0.0 but advertise localhost.
+                in_app env LARAVEL_SAIL=1 npm run dev -- "$@"
+            else
+                in_app npm run build -- "$@"
+            fi ;;
+    esac
+}

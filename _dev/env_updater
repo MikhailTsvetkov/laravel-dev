@@ -1,26 +1,4 @@
-#!/bin/bash
-
-source_file="./.env"
-target_file="./laravel-dev/.env"
-
-echo "" >> "$target_file"
-
-while IFS= read -r line; do
-    # Ignore empty lines and comments
-    if [[ -z "$line" || "$line" =~ ^# ]]; then
-        continue
-    fi
-
-    # Extract the variable name and value
-    key=$(echo "$line" | cut -d'=' -f1)
-    value=$(echo "$line" | cut -d'=' -f2-)
-
-    # Check if this variable exists in the target file
-    if ! grep -q "^$key=" "$target_file"; then
-        # If the variable is not in the target file, add it
-        echo "$line" >> "$target_file"
-    else
-        # If the variable exists, replace its value
-        sed -i "s|^$key=.*|$key=$value|" "$target_file"
-    fi
-done < "$source_file"
+#!/usr/bin/env bash
+set -euo pipefail
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+exec php "$SCRIPT_DIR/env_updater.php" "${1:-$SCRIPT_DIR/../.env}" "${2:-$SCRIPT_DIR/../laravel-dev/.env}"
